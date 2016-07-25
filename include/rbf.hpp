@@ -1,7 +1,6 @@
-#include <stdio.h>
 #include <algorithm>
 using namespace std;
-#define QX_DEF_CHAR_MAX					255
+#define QX_DEF_CHAR_MAX 255
 
 /***********************************************************************
 \Author:	Qingxiong Yang

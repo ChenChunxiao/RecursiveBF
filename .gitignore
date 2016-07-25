@@ -79,3 +79,8 @@ $RECYCLE.BIN/
 *.lnk
 
 *.ppm
+Release
+*.opensdf
+*.sdf
+*.suo
+*.sln

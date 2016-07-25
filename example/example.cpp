@@ -1,9 +1,9 @@
-#include "recursive_bf.hpp"
+#include "../include/rbf.hpp"
+#include <stdio.h>
 #include <time.h>
 #define LEN_MAX	256
 
 int example_filtering(int argc, char*argv[]);
-int example_detail_enhancement(int argc, char*argv[]);
 int main(int argc, char*argv[])
 {
 	if (argc != 6)
