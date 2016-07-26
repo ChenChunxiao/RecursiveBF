@@ -6,13 +6,12 @@
 int example_filtering(int argc, char*argv[]);
 int main(int argc, char*argv[])
 {
-	if (argc != 6)
+	if (argc != 5)
 	{
 		printf("Usage:\n");
 		printf("--------------------------------------------------------------------\n\n");
 		printf("*.exe: filename_out filename_in (only ppm image) \n");
-		printf("       sigma_spatial(e.g., 0.03) sigma_range(e.g., 0.1)\n");
-		printf("       application_id (0 for GDBF; 1 for RBF)\n\n");
+		printf("       sigma_spatial(e.g., 0.03) sigma_range(e.g., 0.1)\n\n");
 		printf("--------------------------------------------------------------------\n");
 		return(-1);
 	}
@@ -233,7 +232,6 @@ int example_filtering(int argc, char*argv[])
 	char*filename_in = argv[2];
 	double sigma_spatial = atof(argv[3]);
 	double sigma_range = atof(argv[4]);
-	int filter_type = atoi(argv[5]);
 
 	int h, w;//height and width of the input image
 	qx_image_size(filename_in, h, w);//obtain the height and width of the input image
@@ -248,22 +246,14 @@ int example_filtering(int argc, char*argv[])
 
 	Timer timer;
 	timer.start();
-	if (filter_type == 0)//GDBF
-	{
-		qx_gradient_domain_recursive_bilateral_filter(
-			image_filtered, image, texture, 
-			sigma_spatial, sigma_range, h, w, temp, temp_2);
-	}
-	else//RBF
-	{
-		double**temp_factor = qx_alloc<double>(h * 2 + 2, w);
-		qx_recursive_bilateral_filter(
-			image_filtered, image, texture, 
-			sigma_spatial, sigma_range, h, w, temp, temp_2, 
-			temp_factor, &(temp_factor[h]), &(temp_factor[h + h]));
-		qx_free(temp_factor); 
-		temp_factor = NULL;
-	}
+
+	double**temp_factor = qx_alloc<double>(h * 2 + 2, w);
+	qx_recursive_bilateral_filter(
+		image_filtered, image, texture,
+		sigma_spatial, sigma_range, h, w, temp, temp_2,
+		temp_factor, &(temp_factor[h]), &(temp_factor[h + h]));
+	qx_free(temp_factor);
+	temp_factor = NULL;
 	printf("Elapsed time: %2.5f", timer.elapsedTime());
 
 	for (int y = 0; y<h; y++) 

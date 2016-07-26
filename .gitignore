@@ -78,9 +78,11 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-*.ppm
 Release
+Debug
+*.ppm
 *.opensdf
 *.sdf
 *.suo
 *.sln
+*.user
