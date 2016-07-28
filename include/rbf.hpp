@@ -13,11 +13,12 @@ European Conference on Computer Vision (ECCV) 2012, 399-413.
 //Large sigma_spatial/sigma_range parameter may results in visible artifact which can be removed by 
 //an additional filter with small sigma_spatial/sigma_range parameter.
 
-void recursive_bf(
-	unsigned char * texture, double * out,
+unsigned char * recursive_bf(
+	unsigned char * texture,
 	double sigma_spatial, double sigma_range, 
 	int width, int height, int channel)
 {
+	double * out = new double[width * height * channel];
 	double * temp = new double[width * height * channel];
 	double * temp_factor = new double[width * (height * 2 + 2)];
 	double * factor_a = new double[width * height];
@@ -201,7 +202,13 @@ void recursive_bf(
 		memcpy(ypf, ycf, sizeof(double) * width);
 	}
 
+
+	unsigned char * out_img = new unsigned char[width * height * channel];
+	for (int i = 0; i < width * height * channel; ++i)
+		out_img[i] = static_cast<unsigned char>(out[i]);
+
 	delete[] in;
+	delete[] out;
 	delete[] temp;
 	delete[] temp_factor;
 	delete[] factor_a;
@@ -209,4 +216,6 @@ void recursive_bf(
 	delete[] factor_c;
 	delete[] factor_cb;
 	delete[] factor_cc;
+
+	return out_img;
 }
