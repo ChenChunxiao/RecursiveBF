@@ -14,16 +14,20 @@ Reference:  Qingxiong Yang, Recursive Bilateral Filtering,
 ************************************************************************/
 
 
-unsigned char * recursive_bf(
-	unsigned char * img_in,
+void recursive_bf(
+	unsigned char * img,
 	float sigma_spatial, float sigma_range, 
-	int width, int height, int channel)
+	int width, int height, int channel,
+	float * buffer = nullptr)
 {
 	const int width_height = width * height;
 	const int width_channel = width * channel;
 	const int width_height_channel = width * height * channel;
-	float * buffer = new float[
-		(width_height_channel + width_height + width_channel + width) * 2];
+
+	bool is_buffer_internal = (buffer == nullptr);
+	if (is_buffer_internal)
+		buffer = new float[(width_height_channel + width_height 
+						    + width_channel + width) * 2];
 
 	float * img_out_f = buffer;
 	float * img_temp = &img_out_f[width_height_channel];
@@ -47,8 +51,8 @@ unsigned char * recursive_bf(
 	for (int y = 0; y < height; y++)
 	{
 		float * temp_x = &img_temp[y * width_channel];
-		unsigned char * in_x = &img_in[y * width_channel];
-		unsigned char * texture_x = &img_in[y * width_channel];
+		unsigned char * in_x = &img[y * width_channel];
+		unsigned char * texture_x = &img[y * width_channel];
 		*temp_x++ = ypr = *in_x++; 
 		*temp_x++ = ypg = *in_x++; 
 		*temp_x++ = ypb = *in_x++;
@@ -129,8 +133,8 @@ unsigned char * recursive_bf(
 	memcpy(map_factor_b, in_factor, sizeof(float) * width);
 	for (int y = 1; y < height; y++)
 	{
-		tpy = &img_in[(y - 1) * width_channel];
-		tcy = &img_in[y * width_channel];
+		tpy = &img[(y - 1) * width_channel];
+		tcy = &img[y * width_channel];
 		xcy = &img_temp[y * width_channel];
 		ypy = &img_out_f[(y - 1) * width_channel];
 		ycy = &img_out_f[y * width_channel];
@@ -171,8 +175,8 @@ unsigned char * recursive_bf(
 
 	for (int y = h1 - 1; y >= 0; y--)
 	{
-		tpy = &img_in[(y + 1) * width_channel];
-		tcy = &img_in[y * width_channel];
+		tpy = &img[(y + 1) * width_channel];
+		tcy = &img[y * width_channel];
 		xcy = &img_temp[y * width_channel];
 		float*ycy_ = ycy;
 		float*ypy_ = ypy;
@@ -208,12 +212,9 @@ unsigned char * recursive_bf(
 		memcpy(ypf, ycf, sizeof(float) * width);
 	}
 
-
-	unsigned char * img_out = new unsigned char[width_height_channel];
 	for (int i = 0; i < width_height_channel; ++i)
-		img_out[i] = static_cast<unsigned char>(img_out_f[i]);
+		img[i] = static_cast<unsigned char>(img_out_f[i]);
 
-	delete[] buffer;
-
-	return img_out;
+	if (is_buffer_internal)
+		delete[] buffer;
 }

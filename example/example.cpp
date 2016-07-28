@@ -35,15 +35,14 @@ int main(int argc, char*argv[])
 		float sigma_range = static_cast<float>(atof(argv[4]));
 
 		int width, height, channel;
-		unsigned char * img_in = stbi_load(filename_in, &width, &height, &channel, 0);
+		unsigned char * img = stbi_load(filename_in, &width, &height, &channel, 0);
 
 		Timer timer;
 		timer.start();
-		unsigned char * img_out = recursive_bf(
-			img_in, sigma_spatial, sigma_range, width, height, channel);
+		recursive_bf(img, sigma_spatial, sigma_range, width, height, channel);
 		printf("Elapsed time = %2.5f secs", timer.elapsedTime());
-		stbi_write_bmp(filename_out, width, height, channel, img_out);
-		delete[] img_in;
-		delete[] img_out;
+
+		stbi_write_bmp(filename_out, width, height, channel, img);
+		delete[] img;
 	}
 }
