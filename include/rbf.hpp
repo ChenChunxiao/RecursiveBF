@@ -18,16 +18,18 @@ void recursive_bf(
 	double sigma_spatial, double sigma_range, 
 	int width, int height, int channel)
 {
+	double * temp = new double[width * height * channel];
+	double * temp_factor = new double[width * (height * 2 + 2)];
+	double * factor_a = new double[width * height];
+	double * factor_b = new double[width];
+	double * factor_c = new double[width];
+	double * factor_cb = new double[width * channel];
+	double * factor_cc = new double[width * channel];
+
 	double * in = new double[width * height * channel];
 	for (int i = 0; i < width * height * channel; ++i)
 		in[i] = texture[i];
-
-	//double * image = new double(width * height * channel);
-	//double * image_filtered = new double(width * height * channel);
-	double * temp = new double[width * height * channel];
-	//double * temp_2 = new double[width * 2 * channel];
-	double * temp_factor = new double[width * (height * 2 + 2)];
-
+	
 	//compute a lookup table
 	double range_table[QX_DEF_CHAR_MAX + 1];
 	double inv_sigma_range = 1.0 / (sigma_range * QX_DEF_CHAR_MAX);
@@ -111,24 +113,18 @@ void recursive_bf(
 	}
 	alpha = exp(-sqrt(2.0) / (sigma_spatial * height));
 	inv_alpha_ = 1 - alpha;
-	in = temp;
 	double * ycy, * ypy, * xcy;
 	unsigned char * tcy, * tpy;
 	memcpy(out, temp, sizeof(double)* width * channel);
 
 	double * in_factor = temp_factor;
 	double*ycf, *ypf, *xcf;
-	double * factor_a = new double[width * height];
-	double * factor_b = new double[width];
-	double * factor_c = new double[width];
-	double * factor_cb = new double[width * channel];
-	double * factor_cc = new double[width * channel];
 	memcpy(factor_a, in_factor, sizeof(double) * width);
 	for (int y = 1; y < height; y++)
 	{
 		tpy = &texture[(y - 1) * width * channel];
 		tcy = &texture[y * width * channel];
-		xcy = &in[y * width * channel];
+		xcy = &temp[y * width * channel];
 		ypy = &out[(y - 1) * width * channel];
 		ycy = &out[y * width * channel];
 
@@ -157,7 +153,7 @@ void recursive_bf(
 
 	ycy = factor_cb;
 	ypy = factor_cc;
-	memcpy(ypy, &in[h1 * width * channel], sizeof(double)* width * channel);
+	memcpy(ypy, &temp[h1 * width * channel], sizeof(double)* width * channel);
 	int k = 0; 
 	for (int x = 0; x < width; x++) {
 		for (int c = 0; c < channel; c++) {
@@ -170,7 +166,7 @@ void recursive_bf(
 	{
 		tpy = &texture[(y + 1) * width * channel];
 		tcy = &texture[y * width * channel];
-		xcy = &in[y * width * channel];
+		xcy = &temp[y * width * channel];
 		double*ycy_ = ycy;
 		double*ypy_ = ypy;
 		double*out_ = &out[y * width * channel];
@@ -204,4 +200,13 @@ void recursive_bf(
 		memcpy(ypy, ycy, sizeof(double) * width * channel);
 		memcpy(ypf, ycf, sizeof(double) * width);
 	}
+
+	delete[] in;
+	delete[] temp;
+	delete[] temp_factor;
+	delete[] factor_a;
+	delete[] factor_b;
+	delete[] factor_c;
+	delete[] factor_cb;
+	delete[] factor_cc;
 }
