@@ -30,10 +30,6 @@ unsigned char * recursive_bf(
 	double * factor_c = new double[width];
 	double * factor_cb = new double[width_channel];
 	double * factor_cc = new double[width_channel];
-
-	double * in = new double[width_height_channel];
-	for (int i = 0; i < width_height_channel; ++i)
-		in[i] = texture[i];
 	
 	//compute a lookup table
 	double range_table[QX_DEF_CHAR_MAX + 1];
@@ -48,7 +44,7 @@ unsigned char * recursive_bf(
 	for (int y = 0; y < height; y++)
 	{
 		double * temp_x = &temp[y * width_channel];
-		double * in_x = &in[y * width_channel];
+		unsigned char * in_x = &texture[y * width_channel];
 		unsigned char * texture_x = &texture[y * width_channel];
 		*temp_x++ = ypr = *in_x++; 
 		*temp_x++ = ypg = *in_x++; 
@@ -211,7 +207,6 @@ unsigned char * recursive_bf(
 	for (int i = 0; i < width_height_channel; ++i)
 		out_img[i] = static_cast<unsigned char>(out[i]);
 
-	delete[] in;
 	delete[] out;
 	delete[] temp;
 	delete[] temp_factor;
