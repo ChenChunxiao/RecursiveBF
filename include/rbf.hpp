@@ -3,18 +3,19 @@ using namespace std;
 #define QX_DEF_CHAR_MAX 255
 
 /***********************************************************************
-\Author:	Qingxiong Yang
-\Function:	Recursive Bilateral Filtering
-\Reference:	Qingxiong Yang, Recursive Bilateral Filtering,
-European Conference on Computer Vision (ECCV) 2012, 399-413.
+
+Notice:     Large sigma_spatial/sigma_range parameter may results in 
+            visible artifact which can be removed by an additional 
+			filter with small sigma_spatial/sigma_range parameter.
+
+Reference:	Qingxiong Yang, Recursive Bilateral Filtering, 
+            European Conference on Computer Vision (ECCV) 2012, 399-413.
+
 ************************************************************************/
 
 
-//Large sigma_spatial/sigma_range parameter may results in visible artifact which can be removed by 
-//an additional filter with small sigma_spatial/sigma_range parameter.
-
 unsigned char * recursive_bf(
-	unsigned char * texture,
+	unsigned char * img_in,
 	float sigma_spatial, float sigma_range, 
 	int width, int height, int channel)
 {
@@ -22,14 +23,14 @@ unsigned char * recursive_bf(
 	const int width_channel = width * channel;
 	const int width_height_channel = width * height * channel;
 
-	float * out = new float[width_height_channel];
-	float * temp = new float[width_height_channel];
-	float * temp_factor = new float[width * (height * 2 + 2)];
-	float * factor_a = new float[width_height];
-	float * factor_b = new float[width];
-	float * factor_c = new float[width];
-	float * factor_cb = new float[width_channel];
-	float * factor_cc = new float[width_channel];
+	float * img_out_f = new float[width_height_channel];
+	float * img_temp = new float[width_height_channel];
+	float * map_factor_a = new float[width_height];
+	float * map_factor_b = new float[width_height];
+	float * slice_factor_a = new float[width_channel];
+	float * slice_factor_b = new float[width_channel];
+	float * line_factor_a = new float[width];
+	float * line_factor_b = new float[width];
 	
 	//compute a lookup table
 	float range_table[QX_DEF_CHAR_MAX + 1];
@@ -43,9 +44,9 @@ unsigned char * recursive_bf(
 	float inv_alpha_ = 1 - alpha;
 	for (int y = 0; y < height; y++)
 	{
-		float * temp_x = &temp[y * width_channel];
-		unsigned char * in_x = &texture[y * width_channel];
-		unsigned char * texture_x = &texture[y * width_channel];
+		float * temp_x = &img_temp[y * width_channel];
+		unsigned char * in_x = &img_in[y * width_channel];
+		unsigned char * texture_x = &img_in[y * width_channel];
 		*temp_x++ = ypr = *in_x++; 
 		*temp_x++ = ypg = *in_x++; 
 		*temp_x++ = ypb = *in_x++;
@@ -53,7 +54,7 @@ unsigned char * recursive_bf(
 		unsigned char tpg = *texture_x++;
 		unsigned char tpb = *texture_x++;
 
-		float * temp_factor_x = &temp_factor[y * width];
+		float * temp_factor_x = &map_factor_a[y * width];
 		*temp_factor_x++ = fp = 1;
 		for (int x = 1; x < width; x++) // from left to right
 		{
@@ -116,22 +117,22 @@ unsigned char * recursive_bf(
 	inv_alpha_ = 1 - alpha;
 	float * ycy, * ypy, * xcy;
 	unsigned char * tcy, * tpy;
-	memcpy(out, temp, sizeof(float)* width_channel);
+	memcpy(img_out_f, img_temp, sizeof(float)* width_channel);
 
-	float * in_factor = temp_factor;
+	float * in_factor = map_factor_a;
 	float*ycf, *ypf, *xcf;
-	memcpy(factor_a, in_factor, sizeof(float) * width);
+	memcpy(map_factor_b, in_factor, sizeof(float) * width);
 	for (int y = 1; y < height; y++)
 	{
-		tpy = &texture[(y - 1) * width_channel];
-		tcy = &texture[y * width_channel];
-		xcy = &temp[y * width_channel];
-		ypy = &out[(y - 1) * width_channel];
-		ycy = &out[y * width_channel];
+		tpy = &img_in[(y - 1) * width_channel];
+		tcy = &img_in[y * width_channel];
+		xcy = &img_temp[y * width_channel];
+		ypy = &img_out_f[(y - 1) * width_channel];
+		ycy = &img_out_f[y * width_channel];
 
 		xcf = &in_factor[y * width];
-		ypf = &factor_a[(y - 1) * width];
-		ycf = &factor_a[y * width];
+		ypf = &map_factor_b[(y - 1) * width];
+		ycf = &map_factor_b[y * width];
 		for (int x = 0; x < width; x++)
 		{
 			unsigned char dr = abs((*tcy++) - (*tpy++));
@@ -146,36 +147,36 @@ unsigned char * recursive_bf(
 		}
 	}
 	int h1 = height - 1;
-	ycf = factor_b;
-	ypf = factor_c;
+	ycf = line_factor_a;
+	ypf = line_factor_b;
 	memcpy(ypf, &in_factor[h1 * width], sizeof(float) * width);
 	for (int x = 0; x < width; x++) 
-		factor_a[h1 * width + x] = 0.5f*(factor_a[h1 * width + x] + ypf[x]);
+		map_factor_b[h1 * width + x] = 0.5f*(map_factor_b[h1 * width + x] + ypf[x]);
 
-	ycy = factor_cb;
-	ypy = factor_cc;
-	memcpy(ypy, &temp[h1 * width_channel], sizeof(float)* width_channel);
+	ycy = slice_factor_a;
+	ypy = slice_factor_b;
+	memcpy(ypy, &img_temp[h1 * width_channel], sizeof(float)* width_channel);
 	int k = 0; 
 	for (int x = 0; x < width; x++) {
 		for (int c = 0; c < channel; c++) {
 			int idx = (h1 * width + x) * channel + c;
-			out[idx] = 0.5f*(out[idx] + ypy[k++]) / factor_a[h1 * width + x];
+			img_out_f[idx] = 0.5f*(img_out_f[idx] + ypy[k++]) / map_factor_b[h1 * width + x];
 		}
 	}
 
 	for (int y = h1 - 1; y >= 0; y--)
 	{
-		tpy = &texture[(y + 1) * width_channel];
-		tcy = &texture[y * width_channel];
-		xcy = &temp[y * width_channel];
+		tpy = &img_in[(y + 1) * width_channel];
+		tcy = &img_in[y * width_channel];
+		xcy = &img_temp[y * width_channel];
 		float*ycy_ = ycy;
 		float*ypy_ = ypy;
-		float*out_ = &out[y * width_channel];
+		float*out_ = &img_out_f[y * width_channel];
 
 		xcf = &in_factor[y * width];
 		float*ycf_ = ycf;
 		float*ypf_ = ypf;
-		float*factor_ = &factor_a[y * width];
+		float*factor_ = &map_factor_b[y * width];
 		for (int x = 0; x < width; x++)
 		{
 			unsigned char dr = abs((*tcy++) - (*tpy++));
@@ -203,18 +204,18 @@ unsigned char * recursive_bf(
 	}
 
 
-	unsigned char * out_img = new unsigned char[width_height_channel];
+	unsigned char * img_out = new unsigned char[width_height_channel];
 	for (int i = 0; i < width_height_channel; ++i)
-		out_img[i] = static_cast<unsigned char>(out[i]);
+		img_out[i] = static_cast<unsigned char>(img_out_f[i]);
 
-	delete[] out;
-	delete[] temp;
-	delete[] temp_factor;
-	delete[] factor_a;
-	delete[] factor_b;
-	delete[] factor_c;
-	delete[] factor_cb;
-	delete[] factor_cc;
+	delete[] img_out_f;
+	delete[] img_temp;
+	delete[] map_factor_a;
+	delete[] map_factor_b;
+	delete[] line_factor_a;
+	delete[] line_factor_b;
+	delete[] slice_factor_a;
+	delete[] slice_factor_b;
 
-	return out_img;
+	return img_out;
 }
