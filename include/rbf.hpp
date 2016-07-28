@@ -218,3 +218,18 @@ void recursive_bf(
 	if (is_buffer_internal)
 		delete[] buffer;
 }
+
+
+void recursive_bf(
+	unsigned char * img_in,
+	unsigned char *& img_out,
+	float sigma_spatial, float sigma_range,
+	int width, int height, int channel,
+	float * buffer = nullptr)
+{
+	if (img_out == nullptr)
+		img_out = new unsigned char[width * height * channel];
+	for (int i = 0; i < width * height * channel; ++i)
+		img_out[i] = img_in[i];
+	recursive_bf(img_out, sigma_spatial, sigma_range, width, height, channel, buffer);
+}
