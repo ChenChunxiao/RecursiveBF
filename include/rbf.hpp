@@ -18,17 +18,21 @@ unsigned char * recursive_bf(
 	double sigma_spatial, double sigma_range, 
 	int width, int height, int channel)
 {
-	double * out = new double[width * height * channel];
-	double * temp = new double[width * height * channel];
+	const int width_height = width * height;
+	const int width_channel = width * channel;
+	const int width_height_channel = width * height * channel;
+
+	double * out = new double[width_height_channel];
+	double * temp = new double[width_height_channel];
 	double * temp_factor = new double[width * (height * 2 + 2)];
-	double * factor_a = new double[width * height];
+	double * factor_a = new double[width_height];
 	double * factor_b = new double[width];
 	double * factor_c = new double[width];
-	double * factor_cb = new double[width * channel];
-	double * factor_cc = new double[width * channel];
+	double * factor_cb = new double[width_channel];
+	double * factor_cc = new double[width_channel];
 
-	double * in = new double[width * height * channel];
-	for (int i = 0; i < width * height * channel; ++i)
+	double * in = new double[width_height_channel];
+	for (int i = 0; i < width_height_channel; ++i)
 		in[i] = texture[i];
 	
 	//compute a lookup table
@@ -43,9 +47,9 @@ unsigned char * recursive_bf(
 	double inv_alpha_ = 1 - alpha;
 	for (int y = 0; y < height; y++)
 	{
-		double * temp_x = &temp[y * width * channel];
-		double * in_x = &in[y * width * channel];
-		unsigned char * texture_x = &texture[y * width * channel];
+		double * temp_x = &temp[y * width_channel];
+		double * in_x = &in[y * width_channel];
+		unsigned char * texture_x = &texture[y * width_channel];
 		*temp_x++ = ypr = *in_x++; 
 		*temp_x++ = ypg = *in_x++; 
 		*temp_x++ = ypb = *in_x++;
@@ -116,18 +120,18 @@ unsigned char * recursive_bf(
 	inv_alpha_ = 1 - alpha;
 	double * ycy, * ypy, * xcy;
 	unsigned char * tcy, * tpy;
-	memcpy(out, temp, sizeof(double)* width * channel);
+	memcpy(out, temp, sizeof(double)* width_channel);
 
 	double * in_factor = temp_factor;
 	double*ycf, *ypf, *xcf;
 	memcpy(factor_a, in_factor, sizeof(double) * width);
 	for (int y = 1; y < height; y++)
 	{
-		tpy = &texture[(y - 1) * width * channel];
-		tcy = &texture[y * width * channel];
-		xcy = &temp[y * width * channel];
-		ypy = &out[(y - 1) * width * channel];
-		ycy = &out[y * width * channel];
+		tpy = &texture[(y - 1) * width_channel];
+		tcy = &texture[y * width_channel];
+		xcy = &temp[y * width_channel];
+		ypy = &out[(y - 1) * width_channel];
+		ycy = &out[y * width_channel];
 
 		xcf = &in_factor[y * width];
 		ypf = &factor_a[(y - 1) * width];
@@ -154,7 +158,7 @@ unsigned char * recursive_bf(
 
 	ycy = factor_cb;
 	ypy = factor_cc;
-	memcpy(ypy, &temp[h1 * width * channel], sizeof(double)* width * channel);
+	memcpy(ypy, &temp[h1 * width_channel], sizeof(double)* width_channel);
 	int k = 0; 
 	for (int x = 0; x < width; x++) {
 		for (int c = 0; c < channel; c++) {
@@ -165,12 +169,12 @@ unsigned char * recursive_bf(
 
 	for (int y = h1 - 1; y >= 0; y--)
 	{
-		tpy = &texture[(y + 1) * width * channel];
-		tcy = &texture[y * width * channel];
-		xcy = &temp[y * width * channel];
+		tpy = &texture[(y + 1) * width_channel];
+		tcy = &texture[y * width_channel];
+		xcy = &temp[y * width_channel];
 		double*ycy_ = ycy;
 		double*ypy_ = ypy;
-		double*out_ = &out[y * width * channel];
+		double*out_ = &out[y * width_channel];
 
 		xcf = &in_factor[y * width];
 		double*ycf_ = ycf;
@@ -198,13 +202,13 @@ unsigned char * recursive_bf(
 			}
 			*factor_++;
 		}
-		memcpy(ypy, ycy, sizeof(double) * width * channel);
+		memcpy(ypy, ycy, sizeof(double) * width_channel);
 		memcpy(ypf, ycf, sizeof(double) * width);
 	}
 
 
-	unsigned char * out_img = new unsigned char[width * height * channel];
-	for (int i = 0; i < width * height * channel; ++i)
+	unsigned char * out_img = new unsigned char[width_height_channel];
+	for (int i = 0; i < width_height_channel; ++i)
 		out_img[i] = static_cast<unsigned char>(out[i]);
 
 	delete[] in;
