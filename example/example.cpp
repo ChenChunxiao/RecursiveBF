@@ -1,11 +1,10 @@
-#include "../include/rbf.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image.hpp"
 #include "stb_image_write.hpp"
+#include "../include/rbf.hpp"
 #include <stdio.h>
 #include <time.h>
-#define LEN_MAX	256
 
 
 class Timer {
