@@ -15,35 +15,35 @@ European Conference on Computer Vision (ECCV) 2012, 399-413.
 
 unsigned char * recursive_bf(
 	unsigned char * texture,
-	double sigma_spatial, double sigma_range, 
+	float sigma_spatial, float sigma_range, 
 	int width, int height, int channel)
 {
 	const int width_height = width * height;
 	const int width_channel = width * channel;
 	const int width_height_channel = width * height * channel;
 
-	double * out = new double[width_height_channel];
-	double * temp = new double[width_height_channel];
-	double * temp_factor = new double[width * (height * 2 + 2)];
-	double * factor_a = new double[width_height];
-	double * factor_b = new double[width];
-	double * factor_c = new double[width];
-	double * factor_cb = new double[width_channel];
-	double * factor_cc = new double[width_channel];
+	float * out = new float[width_height_channel];
+	float * temp = new float[width_height_channel];
+	float * temp_factor = new float[width * (height * 2 + 2)];
+	float * factor_a = new float[width_height];
+	float * factor_b = new float[width];
+	float * factor_c = new float[width];
+	float * factor_cb = new float[width_channel];
+	float * factor_cc = new float[width_channel];
 	
 	//compute a lookup table
-	double range_table[QX_DEF_CHAR_MAX + 1];
-	double inv_sigma_range = 1.0 / (sigma_range * QX_DEF_CHAR_MAX);
+	float range_table[QX_DEF_CHAR_MAX + 1];
+	float inv_sigma_range = 1.0f / (sigma_range * QX_DEF_CHAR_MAX);
 	for (int i = 0; i <= QX_DEF_CHAR_MAX; i++) 
 		range_table[i] = exp(-i * inv_sigma_range);
 
-	double alpha = exp(-sqrt(2.0) / (sigma_spatial * width));
-	double ypr, ypg, ypb, ycr, ycg, ycb;
-	double fp, fc;
-	double inv_alpha_ = 1 - alpha;
+	float alpha = static_cast<float>(exp(-sqrt(2.0) / (sigma_spatial * width)));
+	float ypr, ypg, ypb, ycr, ycg, ycb;
+	float fp, fc;
+	float inv_alpha_ = 1 - alpha;
 	for (int y = 0; y < height; y++)
 	{
-		double * temp_x = &temp[y * width_channel];
+		float * temp_x = &temp[y * width_channel];
 		unsigned char * in_x = &texture[y * width_channel];
 		unsigned char * texture_x = &texture[y * width_channel];
 		*temp_x++ = ypr = *in_x++; 
@@ -53,7 +53,7 @@ unsigned char * recursive_bf(
 		unsigned char tpg = *texture_x++;
 		unsigned char tpb = *texture_x++;
 
-		double * temp_factor_x = &temp_factor[y * width];
+		float * temp_factor_x = &temp_factor[y * width];
 		*temp_factor_x++ = fp = 1;
 		for (int x = 1; x < width; x++) // from left to right
 		{
@@ -64,8 +64,8 @@ unsigned char * recursive_bf(
 			unsigned char dg = abs(tcg - tpg);
 			unsigned char db = abs(tcb - tpb);
 			int range_dist = (((dr << 1) + dg + db) >> 2);
-			double weight = range_table[range_dist];
-			double alpha_ = weight*alpha;
+			float weight = range_table[range_dist];
+			float alpha_ = weight*alpha;
 			*temp_x++ = ycr = inv_alpha_*(*in_x++) + alpha_*ypr; 
 			*temp_x++ = ycg = inv_alpha_*(*in_x++) + alpha_*ypg; 
 			*temp_x++ = ycb = inv_alpha_*(*in_x++) + alpha_*ypb;
@@ -74,15 +74,15 @@ unsigned char * recursive_bf(
 			*temp_factor_x++ = fc = inv_alpha_ + alpha_*fp;
 			fp = fc;
 		}
-		*--temp_x; *temp_x = 0.5*((*temp_x) + (*--in_x));
-		*--temp_x; *temp_x = 0.5*((*temp_x) + (*--in_x));
-		*--temp_x; *temp_x = 0.5*((*temp_x) + (*--in_x));
+		*--temp_x; *temp_x = 0.5f*((*temp_x) + (*--in_x));
+		*--temp_x; *temp_x = 0.5f*((*temp_x) + (*--in_x));
+		*--temp_x; *temp_x = 0.5f*((*temp_x) + (*--in_x));
 		tpr = *--texture_x; 
 		tpg = *--texture_x; 
 		tpb = *--texture_x;
 		ypr = *in_x; ypg = *in_x; ypb = *in_x;
 
-		*--temp_factor_x; *temp_factor_x = 0.5*((*temp_factor_x) + 1);
+		*--temp_factor_x; *temp_factor_x = 0.5f*((*temp_factor_x) + 1);
 		fp = 1;
 
 		for (int x = width - 2; x >= 0; x--) // from right to left
@@ -94,33 +94,33 @@ unsigned char * recursive_bf(
 			unsigned char dg = abs(tcg - tpg);
 			unsigned char db = abs(tcb - tpb);
 			int range_dist = (((dr << 1) + dg + db) >> 2);
-			double weight = range_table[range_dist];
-			double alpha_ = weight * alpha;
+			float weight = range_table[range_dist];
+			float alpha_ = weight * alpha;
 
 			ycr = inv_alpha_ * (*--in_x) + alpha_ * ypr; 
 			ycg = inv_alpha_ * (*--in_x) + alpha_ * ypg; 
 			ycb = inv_alpha_ * (*--in_x) + alpha_ * ypb;
-			*--temp_x; *temp_x = 0.5*((*temp_x) + ycr);
-			*--temp_x; *temp_x = 0.5*((*temp_x) + ycg);
-			*--temp_x; *temp_x = 0.5*((*temp_x) + ycb);
+			*--temp_x; *temp_x = 0.5f*((*temp_x) + ycr);
+			*--temp_x; *temp_x = 0.5f*((*temp_x) + ycg);
+			*--temp_x; *temp_x = 0.5f*((*temp_x) + ycb);
 			tpr = tcr; tpg = tcg; tpb = tcb;
 			ypr = ycr; ypg = ycg; ypb = ycb;
 
 			fc = inv_alpha_ + alpha_*fp;
 			*--temp_factor_x; 
-			*temp_factor_x = 0.5*((*temp_factor_x) + fc);
+			*temp_factor_x = 0.5f*((*temp_factor_x) + fc);
 			fp = fc;
 		}
 	}
-	alpha = exp(-sqrt(2.0) / (sigma_spatial * height));
+	alpha = static_cast<float>(exp(-sqrt(2.0) / (sigma_spatial * height)));
 	inv_alpha_ = 1 - alpha;
-	double * ycy, * ypy, * xcy;
+	float * ycy, * ypy, * xcy;
 	unsigned char * tcy, * tpy;
-	memcpy(out, temp, sizeof(double)* width_channel);
+	memcpy(out, temp, sizeof(float)* width_channel);
 
-	double * in_factor = temp_factor;
-	double*ycf, *ypf, *xcf;
-	memcpy(factor_a, in_factor, sizeof(double) * width);
+	float * in_factor = temp_factor;
+	float*ycf, *ypf, *xcf;
+	memcpy(factor_a, in_factor, sizeof(float) * width);
 	for (int y = 1; y < height; y++)
 	{
 		tpy = &texture[(y - 1) * width_channel];
@@ -138,8 +138,8 @@ unsigned char * recursive_bf(
 			unsigned char dg = abs((*tcy++) - (*tpy++));
 			unsigned char db = abs((*tcy++) - (*tpy++));
 			int range_dist = (((dr << 1) + dg + db) >> 2);
-			double weight = range_table[range_dist];
-			double alpha_ = weight*alpha;
+			float weight = range_table[range_dist];
+			float alpha_ = weight*alpha;
 			for (int c = 0; c < channel; c++) 
 				*ycy++ = inv_alpha_*(*xcy++) + alpha_*(*ypy++);
 			*ycf++ = inv_alpha_*(*xcf++) + alpha_*(*ypf++);
@@ -148,18 +148,18 @@ unsigned char * recursive_bf(
 	int h1 = height - 1;
 	ycf = factor_b;
 	ypf = factor_c;
-	memcpy(ypf, &in_factor[h1 * width], sizeof(double) * width);
+	memcpy(ypf, &in_factor[h1 * width], sizeof(float) * width);
 	for (int x = 0; x < width; x++) 
-		factor_a[h1 * width + x] = 0.5*(factor_a[h1 * width + x] + ypf[x]);
+		factor_a[h1 * width + x] = 0.5f*(factor_a[h1 * width + x] + ypf[x]);
 
 	ycy = factor_cb;
 	ypy = factor_cc;
-	memcpy(ypy, &temp[h1 * width_channel], sizeof(double)* width_channel);
+	memcpy(ypy, &temp[h1 * width_channel], sizeof(float)* width_channel);
 	int k = 0; 
 	for (int x = 0; x < width; x++) {
 		for (int c = 0; c < channel; c++) {
 			int idx = (h1 * width + x) * channel + c;
-			out[idx] = 0.5*(out[idx] + ypy[k++]) / factor_a[h1 * width + x];
+			out[idx] = 0.5f*(out[idx] + ypy[k++]) / factor_a[h1 * width + x];
 		}
 	}
 
@@ -168,38 +168,38 @@ unsigned char * recursive_bf(
 		tpy = &texture[(y + 1) * width_channel];
 		tcy = &texture[y * width_channel];
 		xcy = &temp[y * width_channel];
-		double*ycy_ = ycy;
-		double*ypy_ = ypy;
-		double*out_ = &out[y * width_channel];
+		float*ycy_ = ycy;
+		float*ypy_ = ypy;
+		float*out_ = &out[y * width_channel];
 
 		xcf = &in_factor[y * width];
-		double*ycf_ = ycf;
-		double*ypf_ = ypf;
-		double*factor_ = &factor_a[y * width];
+		float*ycf_ = ycf;
+		float*ypf_ = ypf;
+		float*factor_ = &factor_a[y * width];
 		for (int x = 0; x < width; x++)
 		{
 			unsigned char dr = abs((*tcy++) - (*tpy++));
 			unsigned char dg = abs((*tcy++) - (*tpy++));
 			unsigned char db = abs((*tcy++) - (*tpy++));
 			int range_dist = (((dr << 1) + dg + db) >> 2);
-			double weight = range_table[range_dist];
-			double alpha_ = weight*alpha;
+			float weight = range_table[range_dist];
+			float alpha_ = weight*alpha;
 
-			double fcc = inv_alpha_*(*xcf++) + alpha_*(*ypf_++);
+			float fcc = inv_alpha_*(*xcf++) + alpha_*(*ypf_++);
 			*ycf_++ = fcc;
-			*factor_ = 0.5*(*factor_ + fcc);
+			*factor_ = 0.5f * (*factor_ + fcc);
 
 			for (int c = 0; c < channel; c++)
 			{
-				double ycc = inv_alpha_*(*xcy++) + alpha_*(*ypy_++);
+				float ycc = inv_alpha_*(*xcy++) + alpha_*(*ypy_++);
 				*ycy_++ = ycc;
-				*out_ = 0.5*(*out_ + ycc) / (*factor_);
+				*out_ = 0.5f * (*out_ + ycc) / (*factor_);
 				*out_++;
 			}
 			*factor_++;
 		}
-		memcpy(ypy, ycy, sizeof(double) * width_channel);
-		memcpy(ypf, ycf, sizeof(double) * width);
+		memcpy(ypy, ycy, sizeof(float) * width_channel);
+		memcpy(ypf, ycf, sizeof(float) * width);
 	}
 
 

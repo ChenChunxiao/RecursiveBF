@@ -31,8 +31,8 @@ int main(int argc, char*argv[])
 	{
 		const char * filename_out = argv[1];
 		const char * filename_in = argv[2];
-		double sigma_spatial = atof(argv[3]);
-		double sigma_range = atof(argv[4]);
+		float sigma_spatial = static_cast<float>(atof(argv[3]));
+		float sigma_range = static_cast<float>(atof(argv[4]));
 
 		int width, height, channel;
 		unsigned char * img_in = stbi_load(filename_in, &width, &height, &channel, 0);
