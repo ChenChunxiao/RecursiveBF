@@ -157,7 +157,7 @@ void recursive_bf(
 
 	ycy = factor_cb;
 	ypy = factor_cc;
-	memcpy(ypy, &in[h1 * width], sizeof(double) * width * channel);
+	memcpy(ypy, &in[h1 * width * channel], sizeof(double)* width * channel);
 	int k = 0; 
 	for (int x = 0; x < width; x++) {
 		for (int c = 0; c < channel; c++) {
