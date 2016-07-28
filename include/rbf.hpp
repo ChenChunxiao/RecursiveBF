@@ -6,9 +6,9 @@ using namespace std;
 
 Notice:     Large sigma_spatial/sigma_range parameter may results in 
             visible artifact which can be removed by an additional 
-			filter with small sigma_spatial/sigma_range parameter.
+            filter with small sigma_spatial/sigma_range parameter.
 
-Reference:	Qingxiong Yang, Recursive Bilateral Filtering, 
+Reference:  Qingxiong Yang, Recursive Bilateral Filtering, 
             European Conference on Computer Vision (ECCV) 2012, 399-413.
 
 ************************************************************************/
@@ -22,15 +22,17 @@ unsigned char * recursive_bf(
 	const int width_height = width * height;
 	const int width_channel = width * channel;
 	const int width_height_channel = width * height * channel;
+	float * buffer = new float[
+		(width_height_channel + width_height + width_channel + width) * 2];
 
-	float * img_out_f = new float[width_height_channel];
-	float * img_temp = new float[width_height_channel];
-	float * map_factor_a = new float[width_height];
-	float * map_factor_b = new float[width_height];
-	float * slice_factor_a = new float[width_channel];
-	float * slice_factor_b = new float[width_channel];
-	float * line_factor_a = new float[width];
-	float * line_factor_b = new float[width];
+	float * img_out_f = buffer;
+	float * img_temp = &img_out_f[width_height_channel];
+	float * map_factor_a = &img_temp[width_height_channel];
+	float * map_factor_b = &map_factor_a[width_height]; 
+	float * slice_factor_a = &map_factor_b[width_height];
+	float * slice_factor_b = &slice_factor_a[width_channel];
+	float * line_factor_a = &slice_factor_b[width_channel];
+	float * line_factor_b = &line_factor_a[width];
 	
 	//compute a lookup table
 	float range_table[QX_DEF_CHAR_MAX + 1];
@@ -56,7 +58,9 @@ unsigned char * recursive_bf(
 
 		float * temp_factor_x = &map_factor_a[y * width];
 		*temp_factor_x++ = fp = 1;
-		for (int x = 1; x < width; x++) // from left to right
+
+		// from left to right
+		for (int x = 1; x < width; x++) 
 		{
 			unsigned char tcr = *texture_x++; 
 			unsigned char tcg = *texture_x++; 
@@ -86,7 +90,8 @@ unsigned char * recursive_bf(
 		*--temp_factor_x; *temp_factor_x = 0.5f*((*temp_factor_x) + 1);
 		fp = 1;
 
-		for (int x = width - 2; x >= 0; x--) // from right to left
+		// from right to left
+		for (int x = width - 2; x >= 0; x--) 
 		{
 			unsigned char tcr = *--texture_x; 
 			unsigned char tcg = *--texture_x; 
@@ -208,14 +213,7 @@ unsigned char * recursive_bf(
 	for (int i = 0; i < width_height_channel; ++i)
 		img_out[i] = static_cast<unsigned char>(img_out_f[i]);
 
-	delete[] img_out_f;
-	delete[] img_temp;
-	delete[] map_factor_a;
-	delete[] map_factor_b;
-	delete[] line_factor_a;
-	delete[] line_factor_b;
-	delete[] slice_factor_a;
-	delete[] slice_factor_b;
+	delete[] buffer;
 
 	return img_out;
 }
